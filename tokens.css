@@ -1,0 +1,84 @@
+/*
+ * Design tokens (Increment 2, Milestone 1 — Part V-G / refinement 10).
+ *
+ * The SINGLE source of visual constants. Components reference tokens only — no
+ * hard-coded colours, sizes, spacing, radii, or timings in component styles.
+ * Aesthetic: a professional financial-services app — clean, minimal, trustworthy,
+ * fast; no decorative effects.
+ *
+ * Two layers:
+ *   1. PRIMITIVES — a fixed scale (spacing, radius, type, motion, elevation).
+ *   2. SEMANTIC ROLES — colour roles that map onto the channel theme variables
+ *      (--tg-*, set by theme/theme.ts from Telegram themeParams) with fallbacks,
+ *      so the app inherits the user's Telegram light/dark theme automatically.
+ */
+:root {
+  /* — spacing scale (4px base) — */
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* — radius — */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+
+  /* — typography — */
+  --font-family: system-ui, -apple-system, "Segoe UI", "Noto Sans Ethiopic", "Abyssinica SIL", Roboto, sans-serif;
+  --font-size-xs: 13px;
+  --font-size-sm: 15px;
+  --font-size-md: 17px;
+  --font-size-lg: 20px;
+  --font-size-xl: 24px;
+  --font-size-2xl: 28px;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --line-height: 1.5;
+
+  /* — sizing / layout — */
+  --touch-target: 48px;   /* >= 44px (accessibility) */
+  --content-max: 640px;
+
+  /* — motion (subtle; respect reduced-motion below) — */
+  --motion-fast: 120ms;
+  --motion-base: 200ms;
+  --easing-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  /* — elevation (minimal; one soft level only) — */
+  --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.10);
+
+  /* — semantic colour roles → channel theme (--tg-*) with fallbacks — */
+  --color-bg: var(--tg-bg, #ffffff);
+  --color-surface: var(--tg-secondary-bg, #f1f4f7);
+  --color-surface-2: var(--tg-secondary-bg, #e9eef3);
+  --color-text: var(--tg-text, #1a1a1a);
+  --color-text-muted: var(--tg-hint, #7d8b99);
+  --color-primary: var(--tg-button, #2678b6);
+  --color-on-primary: var(--tg-button-text, #ffffff);
+  --color-link: var(--tg-link, #2678b6);
+  --color-border: var(--tg-hint, #c3ccd5);
+  --color-danger: #d64545;
+  --color-danger-bg: rgba(214, 69, 69, 0.10);
+  --color-success: #26a85c;
+  --color-success-bg: rgba(38, 168, 92, 0.14);
+  --color-focus: var(--tg-link, #2678b6);
+
+  /* — backward-compatible aliases used by Increment 1 styles — */
+  --radius: var(--radius-md);
+  --gap: var(--space-4);
+  --touch: var(--touch-target);
+  --maxw: var(--content-max);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --motion-fast: 0ms; --motion-base: 0ms; }
+}

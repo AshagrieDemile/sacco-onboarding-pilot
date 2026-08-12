@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="am">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>LiFT Onboarding</title>
+    
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="./tokens.css" />
+    <link rel="stylesheet" href="./styles.css" />
+    
+    <script>
+      /* LiFT SACCO Onboarding Mini App — TECHNICAL PILOT (Order #5, Slice 2).
+         Public configuration only; NO secrets. Backend connectivity depends on a
+         separately hosted pilot API (Slice 3+). Override per request with ?api=<url>.
+         NOT for real member registration until the Founder authorises the pilot. */
+      window.__LIFT_CONFIG__ = { apiBaseUrl: "https://api.pilot.invalid/v1", organisationId: "org-demo" };
+    </script>
+  </head>
+  <body>
+    <div id="app" class="app-root" aria-live="polite"></div>
+    <noscript>This application requires JavaScript.</noscript>
+    <script type="module" src="./dist/main.js"></script>
+  </body>
+</html>
