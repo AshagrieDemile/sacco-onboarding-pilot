@@ -1,27 +1,28 @@
-# LiFT SACCO Onboarding — Mini App (Technical Pilot)
+# LiFT SACCO Onboarding — Mini App (Controlled Technical Pilot)
 
-**This repository is a deployment artifact only.** It contains the compiled, secret-free
-static frontend of the LiFT SACCO onboarding Mini App, published here to serve it over
-GitHub Pages for controlled technical testing.
+**This repository is a deployment artifact only.** It contains the compiled, secret-free static
+frontend of the LiFT SACCO onboarding Mini App, served over GitHub Pages for a controlled
+technical pilot.
 
-> **TECHNICAL PILOT — NOT REAL MEMBER REGISTRATION.**
-> The frontend is **not yet connected to a live onboarding API**. It is intended for
-> frontend, navigation, language (English/Amharic), offline/draft, and browser/device
-> compatibility testing only. Loading this page or entering information here does **not**
-> register SACCO membership.
+> **CONTROLLED TECHNICAL PILOT — NOT REAL MEMBER REGISTRATION.**
+> This pilot is connected to a **staging** onboarding API and uses a clearly-labelled **TEST
+> OTP shown on screen — not a real SMS.** Completing the form does **not** create an
+> authoritative SACCO membership record. It is for usability, language (English/Amharic),
+> device, and workflow testing.
 
 ## Status
 
-- **Frontend Technical Deployment — API not yet connected.**
-- The app targets a deliberately non-resolvable placeholder API, so it **fails safely** with a
-  clear "cannot reach the service" message until a real pilot API is separately deployed.
+- **Frontend:** GitHub Pages — `https://ashagriedemile.github.io/sacco-onboarding-pilot/`
+- **API:** controlled **staging** pilot API over HTTPS (test OTP; no real SMS).
+- **Persistence:** the pilot uses ephemeral server state — a restart may discard test
+  submissions. Records are **not** authoritative membership data.
 
 ## What this is / is not
 
-- **Is:** a compiled static build (HTML/CSS/JS) served via GitHub Pages.
-- **Is not:** source code, and not a source of truth. This repository must never be used to
-  develop or reconstruct the application. The application is developed in a **private**
-  repository and deliberately exported here as a build artifact.
+- **Is:** a compiled static build (HTML/CSS/JS) served via GitHub Pages, talking to a controlled
+  staging API.
+- **Is not:** source code, and not a source of truth. The application is developed in a
+  **private** repository and deliberately exported here as a build artifact.
 
 ## Live URL
 
