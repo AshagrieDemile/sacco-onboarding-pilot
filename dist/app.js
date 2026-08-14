@@ -11,6 +11,7 @@ import { connectivityBanner, canSubmitNow, saveIndicatorKey } from "./presentati
 import { nextSyncAction, classifySyncFailure, syncNoticeBanner, reconnectedBanner } from "./presentation/sync-recovery.js";
 import { newOperationId, idempotencyKeyFor } from "./state/submission-op.js";
 import { resetDatePartials } from "./components/date-control.js";
+import { shouldInvalidateSignature } from "./presentation/signature-evidence.js";
 import { LoadingSpinner } from "./components/library.js";
 import { isValidNationalMobile } from "./standards/ethiopian.js";
 import { createI18n } from "./i18n/i18n.js";
@@ -141,6 +142,7 @@ export const createApp = (deps) => {
     let frontier = 0;
     let dirty = false;
     let reviewConfirmed = false;
+    let signatureClearedNotice = false;
     const resetBuffer = () => { history = []; pos = 0; frontier = 0; dirty = false; reviewConfirmed = false; resetDatePartials(); };
     const saveViewedDraft = () => { const cur = history[pos]; if (cur)
         cur.draft = { ...store.get().draft }; };
@@ -701,6 +703,13 @@ export const createApp = (deps) => {
             discrete = w === undefined ? true : w === "select" || w === "checkbox" || w === "fayda";
         }
         store.setDraft(fieldId, value, discrete);
+        if (shouldInvalidateSignature(fieldId, store.get().draft)) {
+            store.setDraft("signature", undefined, true);
+            signatureClearedNotice = true;
+        }
+        else if (fieldId === "signature") {
+            signatureClearedNotice = false;
+        }
         schedulePersist();
     };
     const saveLabelFor = (i18n, s) => {
@@ -722,7 +731,7 @@ export const createApp = (deps) => {
         switch (s.screen) {
             case "connecting":
                 channel.mainButton.hide();
-                return h("div", { class: "screen screen-body-center" }, LoadingSpinner({ label: i18n.t("status.connecting") }));
+                return h("div", { class: "screen screen-body-center" }, LoadingSpinner({ label: i18n.t("status.connecting") }), h("p", { class: "coldstart-note" }, i18n.t("status.coldStart")));
             case "checking":
                 channel.mainButton.hide();
                 return h("div", { class: "screen screen-body-center screen-checking" }, h("h1", { class: "screen-title" }, i18n.t("sync.checkingTitle")), LoadingSpinner({ label: i18n.t("sync.checkingBody") }));
@@ -792,7 +801,7 @@ export const createApp = (deps) => {
                         banner: topBanner(i18n),
                     });
                 }
-                channel.mainButton.show(i18n.t("action.next"), () => navNext());
+                channel.mainButton.show(i18n.t(p.stageId === "declaration" ? "action.submitApplication" : "action.next"), () => navNext());
                 channel.mainButton.setBusy(s.busy);
                 return renderJourney({
                     i18n,
@@ -818,7 +827,7 @@ export const createApp = (deps) => {
                             onFieldBlur: () => render(),
                         }
                         : {}),
-                    ...(p.stageId === "declaration" ? { panelBefore: termsPrivacyPanel(i18n) } : {}),
+                    ...(p.stageId === "declaration" ? { panelBefore: termsPrivacyPanel(i18n), signatureCleared: signatureClearedNotice } : {}),
                 });
             }
         }

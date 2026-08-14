@@ -26,5 +26,13 @@ export const termsPrivacyPanel = (i18n) => {
         "privacy.use.compliance",
         "privacy.use.communication",
         "privacy.use.operational",
-    ]), h("p", { class: "terms-note" }, i18n.t("privacy.note")));
+    ]), h("p", { class: "terms-note" }, i18n.t("privacy.note")), h("h2", { class: "terms-title" }, i18n.t("pilot.notice.head")), bullets(i18n, [
+        "pilot.notice.controlled",
+        "pilot.notice.testOtp",
+        "pilot.notice.notMembership",
+        "pilot.notice.ephemeral",
+        "pilot.notice.esignature",
+        "pilot.notice.comfort",
+        "pilot.notice.support",
+    ]));
 };

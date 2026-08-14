@@ -2,6 +2,7 @@ import {} from "./h.js";
 import { ETH } from "../standards/ethiopian.js";
 import { TextInput, TextArea, Select, CheckboxRow, FieldShell, DocumentUploadPlaceholder } from "../components/library.js";
 import { phoneControl, faydaControl } from "../components/semantic.js";
+import { signaturePad } from "../components/signature-pad.js";
 import { ethiopianDateControl, gregorianDateControl } from "../components/date-control.js";
 import { formatAmount, toNumber, sanitiseMoneyInput } from "../presentation/money.js";
 export const widgetFor = (semanticType) => {
@@ -26,8 +27,9 @@ export const widgetFor = (semanticType) => {
         case "email":
             return "email";
         case "document-reference":
-        case "signature":
             return "document";
+        case "signature":
+            return "signature";
         default:
             return "text";
     }
@@ -70,6 +72,9 @@ export const renderField = (field, ctx) => {
             onInput: (raw) => { const c = sanitiseMoneyInput(raw); const n = c === "" || c === "." ? undefined : Number(c); ctx.onChange(n !== undefined && Number.isFinite(n) ? n : undefined); },
             ...(ctx.onBlur ? { onBlur: ctx.onBlur } : {}),
         }));
+    }
+    if (widget === "signature") {
+        return FieldShell({ id, label, required: ctx.required, ...(ctx.errorKey ? { errorText: ctx.i18n.validation(ctx.errorKey) } : {}) }, signaturePad({ id, value: ctx.value, i18n: ctx.i18n, answers: ctx.answers ?? {}, onChange: ctx.onChange, justCleared: ctx.justCleared === true }));
     }
     if (widget === "checkbox") {
         return FieldShell({ id, label: "", required: ctx.required, ...(ctx.errorKey ? { errorText: ctx.i18n.validation(ctx.errorKey) } : {}) }, CheckboxRow({ id, checked: ctx.value === true, onChange: (b) => emit(b), label }));

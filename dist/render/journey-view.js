@@ -26,6 +26,7 @@ export const renderJourney = (props) => {
             i18n,
             required: isFieldRequired(field, ctx),
             onChange: (v) => props.onChange(field.id, v, live ? true : undefined),
+            ...(field.semanticType === "signature" ? { answers: draft, justCleared: props.signatureCleared === true } : {}),
             ...(money ? { money: true, onBlur: () => props.onFieldBlur?.(field.id) } : {}),
             ...(isVerifiedMobile ? { value: props.verifiedPhone, readOnly: true } : value !== undefined ? { value } : { value: undefined }),
             ...(errorFor.has(field.id) ? { errorKey: errorFor.get(field.id) } : {}),

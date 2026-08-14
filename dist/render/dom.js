@@ -49,6 +49,9 @@ const elementFrom = (v) => {
     }
     if (deferredValue !== undefined)
         el.value = deferredValue;
+    const onMount = v.props["onMount"];
+    if (typeof onMount === "function")
+        queueMicrotask(() => onMount(el));
     return el;
 };
 export const mount = (container, vnode) => {
