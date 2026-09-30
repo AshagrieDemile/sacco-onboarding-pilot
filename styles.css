@@ -123,6 +123,22 @@ textarea.field-input { min-height: 96px; resize: vertical; }
 .field-error { color: #d64545; font-size: 14px; margin: 2px 0 0; }
 .field-error.is-ok { color: #26a85c; }
 .field-input.is-readonly { background: var(--tg-secondary-bg); color: var(--tg-hint); cursor: default; }
+/* Read-only DERIVED display (e.g. Education Level — Order #7 Slice 2B §VIII): a plain,
+   non-interactive value field, not a form control. Uses the readonly text colour so it
+   reads clearly as computed information. */
+.field-input.is-derived { display: flex; align-items: center; color: var(--tg-text); }
+/* Date field: the native Gregorian date input keeps numeric entry AND the calendar picker
+   (Order #7 Slice 2B §V.2). The default picker icon renders near-black and was hard to see
+   on the dark theme; invert it to white and enlarge the touch target. */
+input[type="date"].field-input::-webkit-calendar-picker-indicator {
+  filter: invert(1); opacity: 0.9; cursor: pointer; width: 22px; height: 22px;
+}
+/* Order #7 Slice 2B (§X.1): prominent share value + minimum, shown before the subscription. */
+.subs-info { margin: 0 0 12px; padding: 10px 12px; border: 1px solid var(--tg-hint); border-radius: var(--radius); background: var(--tg-secondary-bg); }
+.subs-info-line { margin: 2px 0; font-size: 15px; }
+.subs-info-line:first-child { font-weight: 600; }
+/* Order #7 Slice 2B (§IV): founding-member expression-of-interest framing on the welcome screen. */
+.home-interest { margin: 8px 0 4px; font-size: 15px; color: var(--tg-text); }
 
 /* — Previous navigation (Slice 6) — */
 .stage-nav { margin-top: var(--space-4); }

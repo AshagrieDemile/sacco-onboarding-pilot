@@ -22,10 +22,12 @@ export const renderJourney = (props) => {
         const isVerifiedMobile = field.semanticType === "ethiopian-mobile-number" && props.verifiedPhone !== undefined;
         const live = props.liveFieldIds?.has(field.id) === true;
         const money = props.moneyFieldIds?.has(field.id) === true;
+        const readOnly = props.readOnlyFieldIds?.has(field.id) === true;
         return renderField(field, {
             i18n,
             required: isFieldRequired(field, ctx),
             onChange: (v) => props.onChange(field.id, v, live ? true : undefined),
+            ...(readOnly && !isVerifiedMobile ? { readOnly: true } : {}),
             ...(field.semanticType === "signature" ? { answers: draft, justCleared: props.signatureCleared === true } : {}),
             ...(money ? { money: true, onBlur: () => props.onFieldBlur?.(field.id) } : {}),
             ...(isVerifiedMobile ? { value: props.verifiedPhone, readOnly: true } : value !== undefined ? { value } : { value: undefined }),

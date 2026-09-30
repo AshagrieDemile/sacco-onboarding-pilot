@@ -52,6 +52,7 @@ const asEnvelope = (v) => {
     const stageId = typeof o["stageId"] === "string" ? o["stageId"] : undefined;
     const locale = typeof o["locale"] === "string" ? o["locale"] : undefined;
     const pendingOp = asPendingOp(o["pendingOp"], identity);
+    const originatorHash = typeof o["originatorHash"] === "string" && o["originatorHash"].length > 0 ? o["originatorHash"] : undefined;
     return {
         schemaVersion: o["schemaVersion"],
         savedAt: o["savedAt"],
@@ -60,6 +61,7 @@ const asEnvelope = (v) => {
         ...(stageId !== undefined ? { stageId } : {}),
         ...(locale !== undefined ? { locale } : {}),
         ...(pendingOp !== undefined ? { pendingOp } : {}),
+        ...(originatorHash !== undefined ? { originatorHash } : {}),
     };
 };
 const asPendingOp = (v, identity) => {
@@ -154,6 +156,7 @@ export const createDraftStore = (options = {}) => {
             ...(env.stageId !== undefined ? { stageId: env.stageId } : {}),
             ...(env.locale !== undefined ? { locale: env.locale } : {}),
             ...(env.pendingOp !== undefined ? { pendingOp: env.pendingOp } : {}),
+            ...(env.originatorHash !== undefined ? { originatorHash: env.originatorHash } : {}),
         };
         return { status: "match", snapshot, savedAt: env.savedAt, ageMs };
     };
@@ -168,6 +171,7 @@ export const createDraftStore = (options = {}) => {
                     ...(snapshot.stageId !== undefined ? { stageId: snapshot.stageId } : {}),
                     ...(snapshot.locale !== undefined ? { locale: snapshot.locale } : {}),
                     ...(snapshot.pendingOp !== undefined ? { pendingOp: snapshot.pendingOp } : {}),
+                    ...(snapshot.originatorHash !== undefined ? { originatorHash: snapshot.originatorHash } : {}),
                 };
                 storage.setItem(keyFor(snapshot.identity), JSON.stringify(env));
                 return true;

@@ -14,6 +14,7 @@ export const computeSubscription = (draft, shareValue = saccoShareValue()) => {
         initialExceedsTotal: total > 0 && initial > total,
     };
 };
+export const shareInfoPanel = (i18n) => h("section", { class: "subs-info", role: "note" }, h("p", { class: "subs-info-line" }, i18n.t("share.oneShareValue")), h("p", { class: "subs-info-line" }, i18n.t("share.minShares")));
 const row = (label, value, extraClass = "") => h("div", { class: `subs-row${extraClass ? " " + extraClass : ""}` }, h("span", { class: "subs-label" }, label), h("span", { class: "subs-value" }, value));
 export const sharesPanel = (i18n, draft, shareValue) => {
     const s = computeSubscription(draft, shareValue);

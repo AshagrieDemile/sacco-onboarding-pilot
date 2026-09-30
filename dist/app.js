@@ -12,6 +12,8 @@ import { nextSyncAction, classifySyncFailure, syncNoticeBanner, reconnectedBanne
 import { newOperationId, idempotencyKeyFor } from "./state/submission-op.js";
 import { resetDatePartials } from "./components/date-control.js";
 import { shouldInvalidateSignature } from "./presentation/signature-evidence.js";
+import { deriveEducationLevel } from "./presentation/education.js";
+import { phoneContinuityHash, resumeAuthorized } from "./presentation/identity.js";
 import { LoadingSpinner } from "./components/library.js";
 import { isValidNationalMobile } from "./standards/ethiopian.js";
 import { createI18n } from "./i18n/i18n.js";
@@ -21,7 +23,7 @@ import { applyBrand } from "./brand/brand.js";
 import { applyOrganisationTheme } from "./brand/organisation.js";
 import { ApiError } from "./api/errors.js";
 import { catalogEntry, devTestOtpAllowed } from "./config.js";
-import { sharesPanel, contributionPanel, computeSubscription } from "./presentation/share-subscription.js";
+import { sharesPanel, contributionPanel, computeSubscription, shareInfoPanel } from "./presentation/share-subscription.js";
 import { termsPrivacyPanel } from "./presentation/terms.js";
 import { saccoShareValue } from "./brand/organisation.js";
 import { isAddisSubCity, isValidAddisWoreda, canonicalWoreda } from "./data/ethiopia.js";
@@ -46,6 +48,7 @@ export const createApp = (deps) => {
     };
     let restoreDraft;
     let restoreEntry;
+    let restoreOriginatorHash;
     let pendingRecovery;
     let persistTimer;
     let submissionOp;
@@ -65,10 +68,12 @@ export const createApp = (deps) => {
         if (id === undefined)
             return;
         const s = store.get();
+        const originatorHash = s.verification.state === "VERIFIED" ? phoneContinuityHash(s.verification.phone) : undefined;
         deps.draftStore.save({
             identity: id,
             draft: mergedDraft(),
             locale: s.locale,
+            ...(originatorHash !== undefined ? { originatorHash } : {}),
             ...(s.presentation?.stageId !== undefined ? { stageId: s.presentation.stageId } : {}),
             ...(submissionOp !== undefined ? { pendingOp: submissionOp } : {}),
         });
@@ -184,6 +189,7 @@ export const createApp = (deps) => {
             clearSubmissionOp();
             restoreDraft = undefined;
             restoreEntry = undefined;
+            restoreOriginatorHash = undefined;
             store.set({ instanceId, revision, presentation, draft: {}, errors: [], busy: false, screen: "terminal", syncNotice: undefined });
             telemetry.submissionSuccessful(instanceId, presentation.outcome);
             telemetry.journeyCompleted(instanceId, presentation.outcome);
@@ -253,6 +259,7 @@ export const createApp = (deps) => {
         const local = mergedDraft();
         restoreDraft = Object.keys(local).length > 0 ? local : undefined;
         restoreEntry = undefined;
+        restoreOriginatorHash = phoneContinuityHash(store.get().verification.phone);
         clearSubmissionOp();
         resetBuffer();
         store.set({ screen: "welcome", instanceId: undefined, revision: undefined, presentation: undefined, draft: {}, errors: [], errorMessage: undefined, syncNotice: undefined });
@@ -372,6 +379,11 @@ export const createApp = (deps) => {
             if (isAddisSubCity(zone) && woreda !== "" && !isValidAddisWoreda(zone, woreda))
                 errs.push({ fieldId: "addr_woreda", messageKey: "validation.addr_woreda.invalidWoreda" });
         }
+        if (stageId === "shares") {
+            const n = Number(d["sharesRequested"]);
+            if (Number.isFinite(n) && n > 0 && n < 20)
+                errs.push({ fieldId: "sharesRequested", messageKey: "validation.sharesRequested.belowMin" });
+        }
         if (stageId === "savings" && computeSubscription(mergedDraft()).initialExceedsTotal)
             errs.push({ fieldId: "initialContribution", messageKey: "validation.initialContribution.exceedsTotal" });
         return errs;
@@ -468,6 +480,7 @@ export const createApp = (deps) => {
         resetBuffer();
         restoreDraft = undefined;
         restoreEntry = undefined;
+        restoreOriginatorHash = undefined;
         clearSubmissionOp();
         telemetry.stepAbandoned();
         store.set({ screen: "welcome", instanceId: undefined, revision: undefined, presentation: undefined, draft: {}, errors: [], errorMessage: undefined, saveState: "idle" });
@@ -481,6 +494,7 @@ export const createApp = (deps) => {
         }
         restoreEntry = r.entry;
         restoreDraft = { ...r.snapshot.draft };
+        restoreOriginatorHash = r.snapshot.originatorHash;
         telemetry.draftRestored(r.snapshot.stageId);
         store.set({ screen: "welcome", ...(r.snapshot.locale === "am" || r.snapshot.locale === "en" ? { locale: r.snapshot.locale } : {}) });
     };
@@ -489,6 +503,7 @@ export const createApp = (deps) => {
         pendingRecovery = undefined;
         restoreDraft = undefined;
         restoreEntry = undefined;
+        restoreOriginatorHash = undefined;
         clearSubmissionOp();
         if (r !== undefined)
             clearDraft(r.entry);
@@ -506,22 +521,13 @@ export const createApp = (deps) => {
         submissionOp = op;
         restoreEntry = recoverable.entry;
         restoreDraft = { ...recoverable.snapshot.draft };
+        restoreOriginatorHash = recoverable.snapshot.originatorHash;
         const loc = recoverable.snapshot.locale;
         store.set({ screen: "checking", ...(loc === "am" || loc === "en" ? { locale: loc } : {}) });
         const knownInstance = op.submissionInstanceId ?? op.originalInstanceId;
         if (knownInstance !== undefined) {
             try {
-                const res = await api.resume(knownInstance);
-                if (res.presentation.status === "completed") {
-                    telemetry.submissionSuccessful(res.instanceId, res.presentation.outcome);
-                    clearDraft(recoverable.entry);
-                    clearSubmissionOp();
-                    restoreEntry = undefined;
-                    restoreDraft = undefined;
-                    pendingRecovery = undefined;
-                    store.set({ instanceId: res.instanceId, revision: res.revision, presentation: res.presentation, draft: {}, errors: [], busy: false, screen: "terminal", syncNotice: undefined });
-                    return;
-                }
+                await api.resume(knownInstance);
                 resumeInstanceId = knownInstance;
             }
             catch (e) {
@@ -677,6 +683,18 @@ export const createApp = (deps) => {
             store.set({ busy: false, verification: { state: "VERIFIED", phone: r.phone, token: r.verificationToken, message: "activation.msg.verified" } });
             channel.haptic("success");
             telemetry.setContext({});
+            const resumePending = resumeInstanceId !== undefined || restoreEntry !== undefined || restoreDraft !== undefined;
+            const identityOk = resumeAuthorized(restoreOriginatorHash, r.phone);
+            if (resumePending && !identityOk) {
+                telemetry.error("resume_identity_denied");
+                resumeInstanceId = undefined;
+                restoreEntry = undefined;
+                restoreDraft = undefined;
+                restoreOriginatorHash = undefined;
+                clearSubmissionOp();
+                startOrPick();
+                return;
+            }
             if (resumeInstanceId !== undefined) {
                 const id = resumeInstanceId;
                 resumeInstanceId = undefined;
@@ -703,6 +721,8 @@ export const createApp = (deps) => {
             discrete = w === undefined ? true : w === "select" || w === "checkbox" || w === "fayda";
         }
         store.setDraft(fieldId, value, discrete);
+        if (fieldId === "highestGrade")
+            store.setDraft("educationLevel", deriveEducationLevel(value), true);
         if (shouldInvalidateSignature(fieldId, store.get().draft)) {
             store.setDraft("signature", undefined, true);
             signatureClearedNotice = true;
@@ -818,7 +838,10 @@ export const createApp = (deps) => {
                     ...(s.verification.state === "VERIFIED" && s.verification.phone ? { verifiedPhone: s.verification.phone } : {}),
                     ...(saveLabelFor(i18n, s.saveState) !== undefined ? { saveLabel: saveLabelFor(i18n, s.saveState) } : {}),
                     ...(p.stageId === "shares"
-                        ? { hiddenFieldIds: new Set(["shareValue"]), panelAfter: sharesPanel(i18n, mergedDraft()), liveFieldIds: new Set(["sharesRequested"]) }
+                        ? { hiddenFieldIds: new Set(["shareValue"]), panelBefore: shareInfoPanel(i18n), panelAfter: sharesPanel(i18n, mergedDraft()), liveFieldIds: new Set(["sharesRequested"]) }
+                        : {}),
+                    ...(p.stageId === "membership"
+                        ? { readOnlyFieldIds: new Set(["educationLevel"]), liveFieldIds: new Set(["highestGrade"]) }
                         : {}),
                     ...(p.stageId === "savings"
                         ? {

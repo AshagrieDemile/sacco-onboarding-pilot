@@ -1,4 +1,4 @@
-import {} from "./h.js";
+import { h } from "./h.js";
 import { ETH } from "../standards/ethiopian.js";
 import { TextInput, TextArea, Select, CheckboxRow, FieldShell, DocumentUploadPlaceholder } from "../components/library.js";
 import { phoneControl, faydaControl } from "../components/semantic.js";
@@ -85,6 +85,10 @@ export const renderField = (field, ctx) => {
             case "textarea":
                 return TextArea({ id, value, onInput: (v) => emit(v), ...(amText ? { lang: "am" } : {}) });
             case "select": {
+                if (ctx.readOnly) {
+                    const shown = value === "" ? "—" : ctx.i18n.option(field.id, value);
+                    return h("div", { id, class: "field-input is-readonly is-derived", role: "note", "aria-readonly": "true" }, shown);
+                }
                 const options = (field.constraints?.options ?? []).map((opt) => ({
                     value: String(opt),
                     label: ctx.i18n.option(field.id, String(opt)),
