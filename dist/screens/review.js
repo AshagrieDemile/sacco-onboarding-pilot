@@ -64,7 +64,7 @@ const sectionFor = (i18n, s, index, onEdit, merged) => {
     }
     rows.push(...subscriptionRows(i18n, s.stageId, merged));
     if (rows.length === 0)
-        return h("");
+        return "";
     return h("section", { class: "review-card" }, h("header", { class: "review-card-head" }, h("span", { class: "review-card-title" }, `${meta.icon} ${i18n.t(meta.titleKey)}`), h("button", { type: "button", class: "btn btn-ghost review-edit", onClick: () => onEdit(index) }, i18n.t("review.edit"))), h("dl", { class: "review-list" }, ...rows));
 };
 export const reviewScreen = (p) => {
