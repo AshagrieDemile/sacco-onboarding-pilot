@@ -35,24 +35,19 @@ const formatValue = (i18n, field, draft) => {
 };
 const moneyRow = (label, value, extraClass = "") => h("div", { class: `review-row${extraClass ? " " + extraClass : ""}` }, h("dt", {}, label), h("dd", {}, value));
 const subscriptionRows = (i18n, stageId, merged) => {
+    if (stageId !== "shares")
+        return [];
     const sub = computeSubscription(merged);
-    if (stageId === "shares") {
-        return [
-            moneyRow(i18n.t("share.valuePerShare"), formatMoney(sub.shareValue, i18n)),
-            moneyRow(i18n.t("share.total"), formatMoney(sub.total, i18n), "review-row-strong"),
-        ];
-    }
-    if (stageId === "savings") {
-        return [
-            moneyRow(i18n.t("share.total"), formatMoney(sub.total, i18n)),
-            moneyRow(i18n.t("share.remaining"), formatMoney(Math.max(0, sub.remaining), i18n), "review-row-strong"),
-        ];
-    }
-    return [];
+    return [
+        moneyRow(i18n.t("share.valuePerShare"), formatMoney(sub.shareValue, i18n)),
+        moneyRow(i18n.t("share.total"), formatMoney(sub.total, i18n), "review-row-strong"),
+        moneyRow(i18n.t("share.initial"), formatMoney(sub.initial, i18n)),
+        moneyRow(i18n.t("share.remaining"), formatMoney(Math.max(0, sub.remaining), i18n)),
+    ];
 };
 const sectionFor = (i18n, s, index, onEdit, merged) => {
     const meta = stageMeta(s.stageId, s.presentation.stageType);
-    const fields = (s.presentation.form?.fields ?? []).filter((f) => strv(s.draft[f.id]) !== "" && f.id !== "shareValue");
+    const fields = (s.presentation.form?.fields ?? []).filter((f) => strv(s.draft[f.id]) !== "" && f.id !== "shareValue" && f.id !== "initialContribution");
     const nameFields = fields.filter((f) => f.id.startsWith("name_"));
     const otherFields = fields.filter((f) => !f.id.startsWith("name_"));
     const rows = [];
@@ -76,5 +71,10 @@ export const reviewScreen = (p) => {
         .map((s, i) => ({ s, i }))
         .filter(({ s }) => s.presentation.stageType !== "review" && s.presentation.stageType !== "terminal")
         .map(({ s, i }) => sectionFor(p.i18n, s, i, p.onEdit, merged));
-    return h("div", { class: "screen screen-review" }, p.banner ?? "", h("header", { class: "journey-head" }, h("div", { class: "journey-head-row" }, h("h1", { class: "journey-title" }, t("review.title")), h("button", { type: "button", class: "lang-toggle", onClick: p.onLanguage, "aria-label": t("action.change_language") }, t(`language.${p.i18n.locale === "am" ? "en" : "am"}`))), h("p", { class: "screen-lede" }, t("review.lede"))), h("main", { class: "review-body" }, ...sections), h("label", { class: "field-check review-confirm" }, h("input", { type: "checkbox", checked: p.confirmed, onChange: (e) => p.onToggleConfirm(Boolean(e.target.checked)) }), h("span", {}, t("review.confirm"))), Button({ label: p.busy ? t("status.saving") : t("review.submit"), onClick: p.onConfirm, variant: "primary", disabled: p.busy || !p.confirmed }));
+    const photo = typeof p.profilePhoto === "string" && p.profilePhoto.length > 0
+        ? h("img", { class: "review-doc-photo", src: p.profilePhoto, alt: t("photo.aria") })
+        : h("div", { class: "review-doc-photo review-doc-photo-placeholder", role: "img", "aria-label": t("photo.aria") }, "👤");
+    return h("div", { class: "screen screen-review" }, p.banner ?? "", h("header", { class: "review-doc-head" }, h("div", { class: "review-doc-headings" }, h("div", { class: "journey-head-row" }, h("h1", { class: "review-doc-title" }, t("review.docTitle")), h("button", { type: "button", class: "lang-toggle", onClick: p.onLanguage, "aria-label": t("action.change_language") }, t(`language.${p.i18n.locale === "am" ? "en" : "am"}`))), h("p", { class: "review-doc-subtitle" }, t("review.title"))), photo), h("p", { class: "screen-lede" }, t("review.lede")), h("p", { class: "review-intent-note", role: "note" }, t("review.intentNote")), h("main", { class: "review-body review-document" }, ...sections), h("label", { class: "field-check review-confirm" }, h("input", { type: "checkbox", checked: p.confirmed, onChange: (e) => p.onToggleConfirm(Boolean(e.target.checked)) }), h("span", {}, t("review.confirm"))), Button({ label: p.busy ? t("status.saving") : t("review.submit"), onClick: p.onConfirm, variant: "primary", disabled: p.busy || !p.confirmed }), p.onPrevious
+        ? h("div", { class: "stage-nav review-nav" }, h("button", { type: "button", class: "btn btn-previous review-previous", onClick: p.onPrevious }, t("nav.previous")))
+        : "");
 };

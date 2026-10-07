@@ -15,10 +15,13 @@ export const computeSubscription = (draft, shareValue = saccoShareValue()) => {
     };
 };
 export const shareInfoPanel = (i18n) => h("section", { class: "subs-info", role: "note" }, h("p", { class: "subs-info-line" }, i18n.t("share.oneShareValue")), h("p", { class: "subs-info-line" }, i18n.t("share.minShares")));
+export const savingsIntroPanel = (i18n) => h("section", { class: "subs-info", role: "note" }, h("p", { class: "subs-info-line" }, i18n.t("sacco.step5.intro")));
 const row = (label, value, extraClass = "") => h("div", { class: `subs-row${extraClass ? " " + extraClass : ""}` }, h("span", { class: "subs-label" }, label), h("span", { class: "subs-value" }, value));
 export const sharesPanel = (i18n, draft, shareValue) => {
     const s = computeSubscription(draft, shareValue);
-    return h("section", { class: "subs-panel", "aria-live": "polite" }, row(i18n.t("share.valuePerShare"), formatMoney(s.shareValue, i18n), "subs-fixed"), row(i18n.t("share.total"), formatMoney(s.total, i18n), "subs-total"));
+    return h("section", { class: "subs-panel", "aria-live": "polite" }, row(i18n.t("share.valuePerShare"), formatMoney(s.shareValue, i18n), "subs-fixed"), row(i18n.t("share.total"), formatMoney(s.total, i18n), "subs-total"), row(i18n.t("share.initial"), formatMoney(s.initial, i18n)), row(i18n.t("share.remaining"), formatMoney(Math.max(0, s.remaining), i18n), "subs-remaining"), s.initialExceedsTotal
+        ? h("p", { class: "subs-error", role: "alert" }, i18n.t("share.err.exceeds", { total: formatMoney(s.total, i18n) }))
+        : "", h("p", { class: "subs-intent", role: "note" }, i18n.t("share.intentNote")));
 };
 export const contributionPanel = (i18n, draft, shareValue) => {
     const s = computeSubscription(draft, shareValue);

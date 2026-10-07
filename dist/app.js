@@ -13,6 +13,8 @@ import { newOperationId, idempotencyKeyFor } from "./state/submission-op.js";
 import { resetDatePartials } from "./components/date-control.js";
 import { shouldInvalidateSignature } from "./presentation/signature-evidence.js";
 import { deriveEducationLevel } from "./presentation/education.js";
+import { profilePhotoControl } from "./components/profile-photo.js";
+import { downloadReceipt, humanReference } from "./presentation/receipt.js";
 import { phoneContinuityHash, resumeAuthorized } from "./presentation/identity.js";
 import { LoadingSpinner } from "./components/library.js";
 import { isValidNationalMobile } from "./standards/ethiopian.js";
@@ -23,7 +25,7 @@ import { applyBrand } from "./brand/brand.js";
 import { applyOrganisationTheme } from "./brand/organisation.js";
 import { ApiError } from "./api/errors.js";
 import { catalogEntry, devTestOtpAllowed } from "./config.js";
-import { sharesPanel, contributionPanel, computeSubscription, shareInfoPanel } from "./presentation/share-subscription.js";
+import { sharesPanel, computeSubscription, shareInfoPanel, savingsIntroPanel } from "./presentation/share-subscription.js";
 import { termsPrivacyPanel } from "./presentation/terms.js";
 import { saccoShareValue } from "./brand/organisation.js";
 import { isAddisSubCity, isValidAddisWoreda, canonicalWoreda } from "./data/ethiopia.js";
@@ -49,6 +51,35 @@ export const createApp = (deps) => {
     let restoreDraft;
     let restoreEntry;
     let restoreOriginatorHash;
+    let profilePhoto;
+    let submittedReceipt;
+    const photoKey = () => deps.session === undefined ? undefined : `lift.profilePhoto:${encodeURIComponent(deps.session.organisationId)}:${encodeURIComponent(deps.session.actorRef)}`;
+    const loadProfilePhoto = () => {
+        const k = photoKey();
+        if (k === undefined)
+            return;
+        try {
+            const v = globalThis.localStorage?.getItem(k);
+            if (typeof v === "string" && v.startsWith("data:image/"))
+                profilePhoto = v;
+        }
+        catch { }
+    };
+    const onProfilePhotoChange = (dataUrl) => {
+        profilePhoto = dataUrl;
+        const k = photoKey();
+        try {
+            const ls = globalThis.localStorage;
+            if (k !== undefined && ls) {
+                if (dataUrl)
+                    ls.setItem(k, dataUrl);
+                else
+                    ls.removeItem(k);
+            }
+        }
+        catch { }
+        render();
+    };
     let pendingRecovery;
     let persistTimer;
     let submissionOp;
@@ -185,6 +216,7 @@ export const createApp = (deps) => {
     const applyPresentation = (instanceId, revision, presentation) => {
         telemetry.setContext({ journeyId: instanceId, locale: store.get().locale });
         if (presentation.status === "completed") {
+            submittedReceipt = { answers: mergedDraft(), reference: humanReference(instanceId), submittedAt: new Date().toISOString(), ...(profilePhoto !== undefined ? { photo: profilePhoto } : {}) };
             clearDraft();
             clearSubmissionOp();
             restoreDraft = undefined;
@@ -383,9 +415,9 @@ export const createApp = (deps) => {
             const n = Number(d["sharesRequested"]);
             if (Number.isFinite(n) && n > 0 && n < 20)
                 errs.push({ fieldId: "sharesRequested", messageKey: "validation.sharesRequested.belowMin" });
+            if (computeSubscription(mergedDraft()).initialExceedsTotal)
+                errs.push({ fieldId: "initialContribution", messageKey: "validation.initialContribution.exceedsTotal" });
         }
-        if (stageId === "savings" && computeSubscription(mergedDraft()).initialExceedsTotal)
-            errs.push({ fieldId: "initialContribution", messageKey: "validation.initialContribution.exceedsTotal" });
         return errs;
     };
     const navNext = () => {
@@ -573,6 +605,7 @@ export const createApp = (deps) => {
     };
     let bootPreselect;
     const boot = async () => {
+        loadProfilePhoto();
         store.set({ screen: "connecting", errorMessage: undefined });
         const result = deps.health ? await deps.health() : { ok: true, status: 200, latencyMs: 0 };
         if (!result.ok) {
@@ -786,7 +819,11 @@ export const createApp = (deps) => {
                 return pickerScreen({ i18n, catalog: config.catalog, onSelect: (entry) => void startJourney(entry), onLanguage: toggleLocale });
             case "terminal":
                 channel.mainButton.hide();
-                return terminalScreen({ i18n, presentation: s.presentation, onRestart: restart, onLanguage: toggleLocale });
+                return terminalScreen({
+                    i18n, presentation: s.presentation, onRestart: restart, onLanguage: toggleLocale,
+                    ...(submittedReceipt !== undefined ? { reference: submittedReceipt.reference, onDownloadReceipt: () => { if (submittedReceipt)
+                            downloadReceipt(i18n, submittedReceipt); } } : {}),
+                });
             case "error":
                 channel.mainButton.hide();
                 return errorScreen({
@@ -819,6 +856,8 @@ export const createApp = (deps) => {
                         onToggleConfirm: (v) => { reviewConfirmed = v; render(); },
                         busy: s.busy,
                         banner: topBanner(i18n),
+                        ...(profilePhoto !== undefined ? { profilePhoto } : {}),
+                        ...(pos > 0 ? { onPrevious: navPrevious } : {}),
                     });
                 }
                 channel.mainButton.show(i18n.t(p.stageId === "declaration" ? "action.submitApplication" : "action.next"), () => navNext());
@@ -837,16 +876,26 @@ export const createApp = (deps) => {
                     canPrevious: pos > 0,
                     ...(s.verification.state === "VERIFIED" && s.verification.phone ? { verifiedPhone: s.verification.phone } : {}),
                     ...(saveLabelFor(i18n, s.saveState) !== undefined ? { saveLabel: saveLabelFor(i18n, s.saveState) } : {}),
+                    ...(p.stageId === "personal"
+                        ? { panelBefore: profilePhotoControl({ i18n, value: profilePhoto, onChange: onProfilePhotoChange }) }
+                        : {}),
                     ...(p.stageId === "shares"
-                        ? { hiddenFieldIds: new Set(["shareValue"]), panelBefore: shareInfoPanel(i18n), panelAfter: sharesPanel(i18n, mergedDraft()), liveFieldIds: new Set(["sharesRequested"]) }
+                        ? {
+                            hiddenFieldIds: new Set(["shareValue"]),
+                            panelBefore: shareInfoPanel(i18n),
+                            panelAfter: sharesPanel(i18n, mergedDraft()),
+                            liveFieldIds: new Set(["sharesRequested", "initialContribution"]),
+                            moneyFieldIds: new Set(["initialContribution"]),
+                            onFieldBlur: () => render(),
+                        }
                         : {}),
                     ...(p.stageId === "membership"
                         ? { readOnlyFieldIds: new Set(["educationLevel"]), liveFieldIds: new Set(["highestGrade"]) }
                         : {}),
                     ...(p.stageId === "savings"
                         ? {
-                            panelAfter: contributionPanel(i18n, mergedDraft()),
-                            moneyFieldIds: new Set(["initialContribution", "plannedRegularContribution"]),
+                            panelBefore: savingsIntroPanel(i18n),
+                            moneyFieldIds: new Set(["plannedRegularContribution"]),
                             onFieldBlur: () => render(),
                         }
                         : {}),

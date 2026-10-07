@@ -140,6 +140,45 @@ input[type="date"].field-input::-webkit-calendar-picker-indicator {
 /* Order #7 Slice 2B (§IV): founding-member expression-of-interest framing on the welcome screen. */
 .home-interest { margin: 8px 0 4px; font-size: 15px; color: var(--tg-text); }
 
+/* ——— Order #7 2nd round ——— */
+/* §3 profile photo */
+.profile-photo { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0 0 16px; }
+.profile-photo-img, .profile-photo-placeholder { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; border: 2px solid var(--tg-hint); background: var(--tg-secondary-bg); }
+.profile-photo-placeholder { display: flex; align-items: center; justify-content: center; font-size: 44px; }
+.profile-photo-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.profile-photo-btn { position: relative; overflow: hidden; cursor: pointer; }
+.profile-photo-input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+.profile-photo-hint { font-size: 13px; color: var(--tg-hint); margin: 2px 0 0; text-align: center; }
+/* §4 subordinate light-blue Previous + sticky nav */
+.btn-previous { background: #d6e8ff; color: #0b3a66; border: 1px solid #a9ccf2; }
+:root[data-theme="dark"] .btn-previous, :root:not([data-theme="light"]) .btn-previous { background: #1e3a5f; color: #cfe4ff; border-color: #2d517e; }
+/* Previous sticks just ABOVE the fixed Next footer (.tg-mainbutton, ~56px) so both stay
+   reachable while scrolling. The journey gets bottom padding so fields clear the nav. */
+.stage-nav.sticky-nav { position: sticky; bottom: calc(60px + env(safe-area-inset-bottom, 0px)); z-index: 6; background: var(--tg-bg); padding-top: 8px; }
+.journey { padding-bottom: 132px; }
+.review-previous { width: 100%; }
+/* §10 review document */
+.review-doc-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin: 0 0 4px; }
+.review-doc-headings { flex: 1 1 auto; }
+.review-doc-title { font-size: 20px; margin: 0; }
+.review-doc-subtitle { font-size: 14px; color: var(--tg-hint); margin: 2px 0 0; }
+.review-doc-photo { width: 64px; height: 64px; border-radius: 8px; object-fit: cover; border: 1px solid var(--tg-hint); flex: 0 0 auto; }
+.review-doc-photo-placeholder { display: flex; align-items: center; justify-content: center; font-size: 32px; background: var(--tg-secondary-bg); }
+.review-intent-note, .subs-intent { font-size: 13px; color: var(--tg-hint); margin: 4px 0 8px; }
+.review-document { border: 1px solid var(--tg-secondary-bg); border-radius: var(--radius); padding: 8px 12px; }
+.review-nav { margin-top: 10px; }
+/* §15 signature box */
+.signature-hint { font-size: 14px; color: var(--tg-hint); margin: 2px 0 8px; }
+.signature-canvas-wrap { border: 2px dashed var(--tg-hint); border-radius: var(--radius); background: var(--tg-secondary-bg); padding: 4px; }
+.signature-canvas { display: block; width: 100%; height: 180px; touch-action: none; }
+.signature-actions { display: flex; gap: 10px; margin: 8px 0 4px; }
+.signature-status-line { font-size: 14px; margin: 4px 0; }
+.signature-status-line.signature-captured .signature-status-value { color: #26a85c; font-weight: 600; }
+.signature-status-label { color: var(--tg-hint); }
+.signature-typed-toggle { display: inline-block; margin-top: 8px; cursor: pointer; text-decoration: underline; }
+.signature-typed-body { margin-top: 8px; }
+.signature-typed-input { width: 100%; }
+
 /* — Previous navigation (Slice 6) — */
 .stage-nav { margin-top: var(--space-4); }
 .stage-prev { width: 100%; }

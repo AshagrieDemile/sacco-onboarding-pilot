@@ -83,6 +83,6 @@ export const renderJourney = (props) => {
         novalidate: true,
         onSubmit: (e) => { e.preventDefault?.(); props.onSubmit?.(); },
     }, props.panelBefore ?? "", ...fieldNodes, props.panelAfter ?? ""), props.canPrevious && props.onPrevious
-        ? h("div", { class: "stage-nav" }, h("button", { type: "button", class: "btn btn-secondary stage-prev", onClick: props.onPrevious }, i18n.t("action.previous")))
+        ? h("div", { class: "stage-nav sticky-nav" }, h("button", { type: "button", class: "btn btn-previous stage-prev", onClick: props.onPrevious }, i18n.t("nav.previous")))
         : "");
 };
